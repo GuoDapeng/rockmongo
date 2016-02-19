@@ -110,6 +110,7 @@ $message["nocollections"] = "There is no collections here, you can not transfer.
 $message["nocollections2"] = "No collections yet";
 $message["download"] = "Download?";
 $message["compressed"] = "Compressed";
+$message["butts"] = "Backed up to the server";
 $message["rowsexported"] = "rows exported";
 $message["createnewcollection"] = "Create new collection in db";
 $message["target"] = "Target";
