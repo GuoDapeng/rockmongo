@@ -169,6 +169,10 @@ class VarExportor {
 				case "MongoCode":
 					$this->_phpParams[$this->_paramIndex] = 'new MongoCode("' . addcslashes($var->code, '"') . '", ' . var_export($var->scope, true) . ')';
 					return $this->_param($this->_paramIndex);
+				case "MongoBinData":
+                    //error_log("MongoBinDataAAAAA");
+//					$this->_jsonParams[$this->_paramIndex] = 'MongoBinData("' . $var->bin . '")';
+//					return $this->_param($this->_paramIndex);
 				default:
 					if (method_exists($var, "__toString")) {
 						return $var->__toString();
@@ -228,6 +232,9 @@ class VarExportor {
 				case "MongoCode":
 					$this->_jsonParams[$this->_paramIndex] = $var->__toString();
 					return $this->_param($this->_paramIndex);
+                case "MongoBinData":
+//                    $this->_jsonParams[$this->_paramIndex] = 'MongoBinData("' . base64_encode($var->bin) . '")';
+//                    return $this->_param($this->_paramIndex);
 				default:
         			if (method_exists($var, "__toString")) {
         				return $var->__toString();

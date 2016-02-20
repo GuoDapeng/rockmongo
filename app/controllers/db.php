@@ -217,7 +217,9 @@ class DbController extends BaseController
                     }
                     $exportor  = new VarExportor($db, $info["key"]);
                     $exportor2 = new VarExportor($db, $options);
-                    $this->contents .= "\n/** {$collection} indexes **/\ndb.getCollection(\"" . addslashes($collection) . "\").ensureIndex(" . $exportor->export(MONGO_EXPORT_JSON) . "," . $exportor2->export(MONGO_EXPORT_JSON) . ");\n";
+                    $this->contents .= "\n/** {$collection} indexes **/\ndb.getCollection(\"" .
+                        addslashes($collection) . "\").ensureIndex(" . $exportor->export(MONGO_EXPORT_JSON) .
+                        "," . $exportor2->export(MONGO_EXPORT_JSON) . ");\n";
                 }
             }
 
@@ -228,14 +230,16 @@ class DbController extends BaseController
                 foreach ($cursor as $one) {
                     $this->countRows++;
                     $exportor = new VarExportor($db, $one);
-                    $this->contents .= "db.getCollection(\"" . addslashes($collection) . "\").insert(" . $exportor->export(MONGO_EXPORT_JSON) . ");\n";
+                    $this->contents .= "db.getCollection(\"" .
+                        addslashes($collection) . "\").insert(" .
+                        $exportor->export(MONGO_EXPORT_JSON) . ");\n";
                     unset($exportor);
                 }
                 unset($cursor);
             }
-            if (x("can_download")) {
-                $prefix = "mongo-" . urlencode($this->db) . "-" . date("Ymd-His");
 
+            $prefix = "mongo-" . urlencode($this->db) . "-" . date("Ymd-His");
+            if (x("can_download")) {
                 //gzip
                 if (x("gzip")) {
                     ob_end_clean();
@@ -251,7 +255,14 @@ class DbController extends BaseController
                     exit();
                 }
             } elseif (x("butts")) {
-
+                //将文件压缩放到服务器上
+                $myfile = fopen(BACKUP_DIR . '/' . $prefix . 'js', "w") or die("Unable to open file!");
+                fwrite($myfile, $this->contents);
+                fclose($myfile);
+                //error_log(json_encode(array('GET'=>$_GET,'POST'=>$_POST)));
+                $myfile = fopen(BACKUP_DIR . '/' . $prefix . 'txt', "w") or die("Unable to open file!");
+                fwrite($myfile, json_encode($_POST['checked']));
+                fclose($myfile);
             }
         }
 
@@ -276,39 +287,12 @@ class DbController extends BaseController
                     $body = file_get_contents($tmp);
                 }
 
-                //check format
-
-                $ret = array("ok" => 0);
-                if ($format == "js") {
-                    $ret = $this->_mongo->selectDB($this->db)->execute('function (){ ' . $body . ' }');
-
-                    if (!$ret["ok"]) {
-                        $this->error = $ret["errmsg"];
-                    } else {
-                        $this->message = "All data import successfully.";
-                    }
-                } else {
-                    $collection = trim(xn("collection"));
-                    if ($collection === "") {
-                        $this->error2 = "Please enter the collection name";
-                    } else {
-                        $lines = explode("\n", $body);
-                        foreach ($lines as $line) {
-                            $line = trim($line);
-                            if ($line) {
-                                $ret = $this->_mongo->selectDB($this->db)->execute('function (c, o){ o=eval("(" + o + ")"); db.getCollection(c).insert(o); }', array($collection, $line));
-                            }
-                        }
-
-
-                        if (!$ret["ok"]) {
-                            $this->error2 = $ret["errmsg"];
-                        } else {
-                            $this->message2 = "All data import successfully.";
-                        }
-                    }
-                }
-
+                $this->_dbImport($format, $body);
+            } elseif (x("format") == "local") {
+                error_log("POST:" . json_encode($_POST));
+                error_log(BACKUP_DIR . '/' . $_POST["name"]);
+                $body = file_get_contents(BACKUP_DIR . '/' . $_POST["name"]);
+                $this->_dbImport('js', $body);
             } else {
                 if ($format == "js") {
                     $this->error = "Either no file input or file is too large to upload.";
@@ -319,6 +303,42 @@ class DbController extends BaseController
         }
 
         $this->display();
+    }
+
+    private function _dbImport($format, $body)
+    {
+        //check format
+
+        $ret = array("ok" => 0);
+        if ($format == "js") {
+            $ret = $this->_mongo->selectDB($this->db)->execute('function (){ ' . $body . ' }');
+
+            if (!$ret["ok"]) {
+                $this->error = $ret["errmsg"];
+            } else {
+                $this->message = "All data import successfully.";
+            }
+        } else {
+            $collection = trim(xn("collection"));
+            if ($collection === "") {
+                $this->error2 = "Please enter the collection name";
+            } else {
+                $lines = explode("\n", $body);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if ($line) {
+                        $ret = $this->_mongo->selectDB($this->db)->execute('function (c, o){ o=eval("(" + o + ")"); db.getCollection(c).insert(o); }', array($collection, $line));
+                    }
+                }
+
+
+                if (!$ret["ok"]) {
+                    $this->error2 = $ret["errmsg"];
+                } else {
+                    $this->message2 = "All data import successfully.";
+                }
+            }
+        }
     }
 
     /** db profiling **/

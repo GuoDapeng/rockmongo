@@ -35,9 +35,7 @@
     <div class="clear"></div>
     <br/>
     <?php hm("download"); ?><br/>
-    <input type="checkbox"
-           name="can_download"
-           value="1"
+    <input type="checkbox" name="can_download" value="1"
         <?php if (x("can_download")): ?>
             checked="checked"
         <?php endif; ?>
@@ -55,7 +53,7 @@
 
 <?php if (!x("can_download") && isset($contents)): ?>
     <?php if (x("butts")): ?>
-        <p>hehe</p>
+
     <?php else: ?>
         <?php h($countRows); ?>
         <?php hm("rowsexported"); ?>:<br/>
@@ -64,3 +62,67 @@
         </textarea>
     <?php endif; ?>
 <?php endif; ?>
+
+<br/>
+<br/>
+<?php
+//获取某目录下所有文件、目录名（不包括子目录下文件、目录名）
+$handler = opendir(BACKUP_DIR);
+while (($filename = readdir($handler)) !== false) {//务必使用!==，防止目录下出现类似文件名“0”等情况
+    if ($filename != "." && $filename != "..") {
+        $files[] = $filename;
+    }
+}
+
+closedir($handler);
+
+//打印所有文件名
+//foreach ($files as $value) {
+//    echo $value . "<br />";
+//}
+?>
+<p><?php hm("Backed_list"); ?></p>
+
+<?php
+/**
+ * 方便的显示文件大小
+ *
+ * @param $filesize
+ *
+ * @return string
+ */
+function sizecount($filesize)
+{
+    if ($filesize >= 1073741824) {
+        $filesize = round($filesize / 1073741824 * 100) / 100 . ' gb';
+    } elseif ($filesize >= 1048576) {
+        $filesize = round($filesize / 1048576 * 100) / 100 . ' mb';
+    } elseif ($filesize >= 1024) {
+        $filesize = round($filesize / 1024 * 100) / 100 . ' kb';
+    }
+
+    return $filesize;
+}
+
+?>
+
+<table>
+    <tr>
+        <td><?php hm("name"); ?></td>
+        <td><?php hm("size"); ?></td>
+        <td><?php hm("download_url"); ?></td>
+    </tr>
+    <?php foreach ($files as $value): ?>
+        <tr>
+            <td>
+                <?php echo $value ?>
+            </td>
+            <td>
+                <?php echo sizecount(filesize(BACKUP_DIR . '/' . $value)); ?>
+            </td>
+            <td>
+                <a href="<?php echo SERVER_PATH . BACKUP_DIR . '/' . $value ?>"><?php hm("download_url"); ?></a>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</table>
