@@ -106,23 +106,31 @@ function sizecount($filesize)
 
 ?>
 
-<table>
-    <tr>
-        <td><?php hm("name"); ?></td>
-        <td><?php hm("size"); ?></td>
-        <td><?php hm("download_url"); ?></td>
-    </tr>
-    <?php foreach ($files as $value): ?>
+<form method="post">
+    <input type="hidden" name="format" value="delete"/>
+    <table>
         <tr>
-            <td>
-                <?php echo $value ?>
-            </td>
-            <td>
-                <?php echo sizecount(filesize(BACKUP_DIR . '/' . $value)); ?>
-            </td>
-            <td>
-                <a href="<?php echo SERVER_PATH . BACKUP_DIR . '/' . $value ?>"><?php hm("download_url"); ?></a>
-            </td>
+            <td></td>
+            <td><?php hm("name"); ?></td>
+            <td><?php hm("size"); ?></td>
+            <td><?php hm("download_url"); ?></td>
         </tr>
-    <?php endforeach; ?>
-</table>
+        <?php foreach ($files as $value): ?>
+            <tr>
+                <td>
+                    <label><input name="name" type="radio" value="<?php echo $value ?>" /></label>
+                </td>
+                <td>
+                    <?php echo $value ?>
+                </td>
+                <td>
+                    <?php echo sizecount(filesize(BACKUP_DIR . '/' . $value)); ?>
+                </td>
+                <td>
+                    <a href="<?php echo SERVER_PATH . BACKUP_DIR . '/' . $value ?>"><?php hm("download_url"); ?></a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+    <input type="submit" value="<?php hm("delete"); ?>"/>
+</form>

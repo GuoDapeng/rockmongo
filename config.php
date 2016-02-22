@@ -58,4 +58,5 @@ $i++;
  * $i ++;
  **/
 
+$MONGO['data']['MongoBinData']='calssNamr';
 ?>

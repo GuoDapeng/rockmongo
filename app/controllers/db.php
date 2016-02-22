@@ -186,6 +186,28 @@ class DbController extends BaseController
     /** export db **/
     public function doDbExport()
     {
+        if (x("format") == "delete") {
+            $file = BACKUP_DIR . '/' . $_POST["name"];//你要删除的文件目录
+            if (file_exists($file)) {
+                $result = @unlink($file); //unlink函数删除文件用的
+                if ($result == true) {
+                    //echo '文件已经成功删除';
+                } else {
+                    //echo '文件无法删除';
+                }
+            } else {
+                //echo("文件不存在");
+            }
+
+            $this->display();
+
+            return;
+        }
+
+
+        global $MONGO;
+        $MONGO['data']['MongoBinData'] = 'info';
+
         $this->db = xn("db");
 
         $db                        = $this->_mongo->selectDB($this->db);
@@ -218,8 +240,11 @@ class DbController extends BaseController
                     $exportor  = new VarExportor($db, $info["key"]);
                     $exportor2 = new VarExportor($db, $options);
                     $this->contents .= "\n/** {$collection} indexes **/\ndb.getCollection(\"" .
-                        addslashes($collection) . "\").ensureIndex(" . $exportor->export(MONGO_EXPORT_JSON) .
-                        "," . $exportor2->export(MONGO_EXPORT_JSON) . ");\n";
+                        addslashes($collection) .
+                        "\").ensureIndex(" .
+                        $exportor->export(MONGO_EXPORT_JSON) . "," .
+                        $exportor2->export(MONGO_EXPORT_JSON) .
+                        ");\n";
                 }
             }
 
@@ -232,7 +257,7 @@ class DbController extends BaseController
                     $exportor = new VarExportor($db, $one);
                     $this->contents .= "db.getCollection(\"" .
                         addslashes($collection) . "\").insert(" .
-                        $exportor->export(MONGO_EXPORT_JSON) . ");\n";
+                        $exportor->export(MONGO_EXPORT_JSON) . ");\n\n";
                     unset($exportor);
                 }
                 unset($cursor);
@@ -256,11 +281,11 @@ class DbController extends BaseController
                 }
             } elseif (x("butts")) {
                 //将文件压缩放到服务器上
-                $myfile = fopen(BACKUP_DIR . '/' . $prefix . 'js', "w") or die("Unable to open file!");
+                $myfile = fopen(BACKUP_DIR . '/' . $prefix . '.js', "w") or die("Unable to open file!");
                 fwrite($myfile, $this->contents);
                 fclose($myfile);
                 //error_log(json_encode(array('GET'=>$_GET,'POST'=>$_POST)));
-                $myfile = fopen(BACKUP_DIR . '/' . $prefix . 'txt', "w") or die("Unable to open file!");
+                $myfile = fopen(BACKUP_DIR . '/' . $prefix . '.txt', "w") or die("Unable to open file!");
                 fwrite($myfile, json_encode($_POST['checked']));
                 fclose($myfile);
             }
@@ -289,10 +314,20 @@ class DbController extends BaseController
 
                 $this->_dbImport($format, $body);
             } elseif (x("format") == "local") {
-                error_log("POST:" . json_encode($_POST));
-                error_log(BACKUP_DIR . '/' . $_POST["name"]);
-                $body = file_get_contents(BACKUP_DIR . '/' . $_POST["name"]);
-                $this->_dbImport('js', $body);
+                $handle = @fopen(BACKUP_DIR . '/' . $_POST["name"], "r");
+                $body   = "";
+                if ($handle) {
+                    while (!feof($handle)) {
+                        $buffer = fgets($handle, 4096);
+                        $body .= $buffer;
+                        if ($buffer === "\n") {
+                            $this->_dbImport('js', $body);
+                            $body = "";
+                        }
+                    }
+                    fclose($handle);
+                }
+                //$body = file_get_contents(BACKUP_DIR . '/' . $_POST["name"]);
             } else {
                 if ($format == "js") {
                     $this->error = "Either no file input or file is too large to upload.";

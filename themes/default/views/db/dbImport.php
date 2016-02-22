@@ -36,6 +36,62 @@
 
 <br/>
 <br/>
+<hr style="margin:20px 0px"/>
+
+<a href="#" id="browseButton">Select files</a>
+<p id="schedule">0</p>
+<script src="js/resumable.js"></script>
+<script>
+    r = new Resumable({
+        target: 'upload/upload.php'
+    });
+
+    r.assignBrowse(document.getElementById('browseButton'));
+
+    r.on('fileSuccess', function (file) {
+        console.debug('fileSuccess', file);
+    });
+    r.on('fileProgress', function (file) {
+        // Handle progress for both the file and the overall upload
+        document.getElementById('schedule').innerHTML = Math.floor(file.progress() * 100);
+        console.debug('fileProgress', file);
+    });
+    r.on('fileAdded', function (file, event) {
+        r.upload();
+        console.debug('fileAdded', event);
+    });
+    r.on('filesAdded', function (array) {
+        r.upload();
+        //document.getElementById('fileName').innerHTML = array[0].fileName;
+        console.debug('filesAdded', array);
+    });
+    r.on('fileRetry', function (file) {
+        console.debug(file);
+    });
+    r.on('fileError', function (file, message) {
+        console.debug('fileError', file, message);
+    });
+    r.on('uploadStart', function () {
+        console.debug('uploadStart');
+    });
+    r.on('complete', function () {
+        console.debug('complete');
+        window.location.href = "/rockmongo-1.1.7/index.php?action=db.dbImport&db=local";
+    });
+    r.on('progress', function () {
+        console.debug('progress');
+    });
+    r.on('error', function (message, file) {
+        console.debug('error', message, file);
+    });
+    r.on('pause', function () {
+        console.debug('pause');
+    });
+    r.on('cancel', function () {
+        console.debug('cancel');
+    });
+</script>
+
 <?php
 //获取某目录下所有文件、目录名（不包括子目录下文件、目录名）
 $handler = opendir(BACKUP_DIR);
@@ -88,7 +144,7 @@ function sizecount($filesize)
         <?php foreach ($files as $value): ?>
             <tr>
                 <td>
-                    <label><input name="name" type="radio" value="<?php echo $value ?>" /></label>
+                    <label><input name="name" type="radio" value="<?php echo $value ?>"/></label>
                 </td>
                 <td>
                     <?php echo $value ?>
