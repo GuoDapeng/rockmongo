@@ -113,6 +113,7 @@ $message["compressed"]             = "Compressed";
 $message["butts"]                  = "Backed up to the server";
 $message["Backed_list"]            = "Backed list";
 $message["download_url"]           = "Download";
+$message["select_files"]           = "Select files";
 $message["rowsexported"]           = "rows exported";
 $message["createnewcollection"]    = "Create new collection in db";
 $message["target"]                 = "Target";

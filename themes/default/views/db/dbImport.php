@@ -38,8 +38,8 @@
 <br/>
 <hr style="margin:20px 0px"/>
 
-<a href="#" id="browseButton">Select files</a>
-<p id="schedule">0</p>
+<a href="#" id="browseButton" style="display: inline-block"><?php hm("select_files"); ?></a>
+<p id="schedule" style="display: inline-block">0%</p>
 <script src="js/resumable.js"></script>
 <script>
     r = new Resumable({
@@ -53,7 +53,7 @@
     });
     r.on('fileProgress', function (file) {
         // Handle progress for both the file and the overall upload
-        document.getElementById('schedule').innerHTML = Math.floor(file.progress() * 100);
+        document.getElementById('schedule').innerHTML = Math.floor(file.progress() * 100) + "%";
         console.debug('fileProgress', file);
     });
     r.on('fileAdded', function (file, event) {
