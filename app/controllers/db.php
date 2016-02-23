@@ -225,8 +225,10 @@ class DbController extends BaseController
             sort($this->selectedCollections);
 
             import("classes.VarExportor");
-            $this->contents  = "";
-            $this->countRows = 0;
+            $prefix    = "mongo-" . urlencode($this->db) . "-" . date("Ymd-His");
+
+            //将文件放到服务器上
+            $file_path = BACKUP_DIR . '/' . $prefix . '.js';
 
             //indexes
             foreach ($this->selectedCollections as $collection) {
@@ -239,51 +241,61 @@ class DbController extends BaseController
                     }
                     $exportor  = new VarExportor($db, $info["key"]);
                     $exportor2 = new VarExportor($db, $options);
-                    $this->contents .= "\n/** {$collection} indexes **/\ndb.getCollection(\"" .
+                    $contents  = "\n/** {$collection} indexes **/\ndb.getCollection(\"" .
                         addslashes($collection) .
                         "\").ensureIndex(" .
                         $exportor->export(MONGO_EXPORT_JSON) . "," .
                         $exportor2->export(MONGO_EXPORT_JSON) .
                         ");\n";
+                    file_put_contents($file_path, $contents, FILE_APPEND);
+                    unset($exportor);
+                    unset($exportor2);
                 }
             }
 
+            $countRows = 0;
             //data
             foreach ($this->selectedCollections as $collection) {
+                $contents = "\n/** " . $collection . " records **/\n";
+                file_put_contents($file_path, $contents, FILE_APPEND);
+
                 $cursor = $db->selectCollection($collection)->find();
-                $this->contents .= "\n/** " . $collection . " records **/\n";
                 foreach ($cursor as $one) {
-                    $this->countRows++;
+                    $countRows++;
                     $exportor = new VarExportor($db, $one);
-                    $this->contents .= "db.getCollection(\"" .
+                    $contents = "db.getCollection(\"" .
                         addslashes($collection) . "\").insert(" .
-                        $exportor->export(MONGO_EXPORT_JSON) . ");\n\n";
+                        $exportor->export(MONGO_EXPORT_JSON) .
+                        ");\n\n";
+                    file_put_contents($file_path, $contents, FILE_APPEND);
                     unset($exportor);
                 }
                 unset($cursor);
             }
 
-            $prefix = "mongo-" . urlencode($this->db) . "-" . date("Ymd-His");
             if (x("can_download")) {
                 //gzip
                 if (x("gzip")) {
                     ob_end_clean();
                     header("Content-type: application/x-gzip");
                     header("Content-Disposition: attachment; filename=\"{$prefix}.gz\"");
-                    echo gzcompress($this->contents, 9);
+                    $str = file_get_contents($file_path);
+                    if ($str) {
+                        echo gzcompress($str, 9);
+                    }
+                    @unlink($file_path);
+                    //echo gzcompress($this->contents, 9);
                     exit();
                 } else {
                     ob_end_clean();
                     header("Content-type: application/octet-stream");
                     header("Content-Disposition: attachment; filename=\"{$prefix}.js\"");
-                    echo $this->contents;
+                    readfile($file_path);
+                    @unlink($file_path);
+                    //echo $this->contents;
                     exit();
                 }
             } elseif (x("butts")) {
-                //将文件压缩放到服务器上
-                $myfile = fopen(BACKUP_DIR . '/' . $prefix . '.js', "w") or die("Unable to open file!");
-                fwrite($myfile, $this->contents);
-                fclose($myfile);
                 //error_log(json_encode(array('GET'=>$_GET,'POST'=>$_POST)));
                 $myfile = fopen(BACKUP_DIR . '/' . $prefix . '.txt', "w") or die("Unable to open file!");
                 fwrite($myfile, json_encode($_POST['checked']));
