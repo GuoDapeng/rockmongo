@@ -262,6 +262,20 @@ class DbController extends BaseController
                 $cursor = $db->selectCollection($collection)->find();
                 foreach ($cursor as $one) {
                     $countRows++;
+//                    //这个是公司业务需要,进行排除的键
+//                    if ($one['_cmid'] != "3") {
+//                        continue;
+//                    }
+//                    if (isset($one['_cmid'])) {
+//                        unset($one['_cmid']);
+//                    }
+//                    if (isset($one['_sv'])) {
+//                        unset($one['_sv']);
+//                    }
+//                    if (isset($one['_v'])) {
+//                        unset($one['_v']);
+//                    }
+
                     $exportor = new VarExportor($db, $one);
                     $contents = "db.getCollection(\"" .
                         addslashes($collection) . "\").insert(" .
